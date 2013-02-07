@@ -3,13 +3,14 @@
 from urllib import urlopen
 from json import loads, dumps
 from xml.dom.minidom import parseString, Document
-from collections import Iterable, Mapping
 from functools import partial
 
 from HashableClasses import h_array
-from BasicFunctions import flatten, one_line
-from RoleSymmetricGame import *
+from BasicFunctions import one_line
+from RoleSymmetricGame import Game, PayoffData, is_asymmetric, is_symmetric, Profile, SampleGame
 
+import sys
+from argparse import ArgumentParser
 
 def read(source):
 	if isinstance(source, basestring):

@@ -2,8 +2,7 @@ import numpy as np
 
 from collections import OrderedDict
 
-from BasicFunctions import *
-
+from BasicFunctions import prod
 
 def _blocked_attribute(*args, **kwargs):
 	raise TypeError("hashing requires immutability")

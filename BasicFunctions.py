@@ -1,10 +1,8 @@
 from math import factorial
 from operator import mul
 from itertools import chain
-from argparse import ArgumentParser
 from subprocess import PIPE, Popen
 from functools import partial
-import sys
 import numpy as np
 
 
@@ -75,7 +73,7 @@ def weighted_least_squares(x, y, weights):
 		W = np.zeros([x.shape[0]]*2)
 		np.fill_diagonal(W, weights)
 		return y.T.dot(W).dot(A).dot(np.linalg.inv(A.T.dot(W).dot(A)))
-	except np.linalg.linalg.LinAlgError as e:
+	except np.linalg.linalg.LinAlgError:
 		z = A.T.dot(W).dot(A)
 		for i in range(z.shape[0]):
 			for j in range(z.shape[1]):
