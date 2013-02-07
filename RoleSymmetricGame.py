@@ -416,7 +416,7 @@ class SampleGame(Game):
 		samples = map(list, self.zeros())
 		for r, role in enumerate(self.roles):
 			played = []
-			for strat, __, values in role_payoffs[role]:
+			for strat, count, values in role_payoffs[role]:
 				s = self.index(role, strat)
 				samples[r][s] = values
 				self.min_samples = min(self.min_samples, len(values))
