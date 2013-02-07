@@ -60,7 +60,7 @@ def pre_aggregate(game, count):
 	return agg
 
 
-def bootstrap(game, equilibrium, stastic=regret, method_args=[], \
+def bootstrap(game, equilibrium, statistic=regret, method_args=[], \
 					method="resample", points=1000):
 	"""
 	Returns a bootstrap distribution for the statistic.
@@ -76,7 +76,7 @@ def bootstrap(game, equilibrium, stastic=regret, method_args=[], \
 	method = getattr(game, method)
 	for i in range(points):
 		method(*method_args)
-		boot_dstr.append(stastic(game, equilibrium))
+		boot_dstr.append(statistic(game, equilibrium))
 	game.reset()
 	boot_dstr.sort()
 	return boot_dstr
@@ -92,9 +92,7 @@ def bootstrap_experiment(base_game_func, noisy_game_func, statistic=regret, \
 			sample_game = noisy_game_func(base_game, stdev, sample_sizes[-1])
 			for sample_size in sample_sizes:
 				subsample_game = subsample(sample_game, sample_size)
-				equilibria = equilibrium_search(subsample_game, \
-							random_restarts=subsample_game.maxStrategies, \
-							iters=1000)
+				equilibria = equilibrium_search(subsample_game)
 				results[i][stdev][sample_size] = [ \
 					{ \
 						"profile" : eq,
