@@ -13,6 +13,12 @@ from numpy import array, arange, zeros, fill_diagonal
 import sys
 
 
+def __make_asymmetric_game(player_count, strategy_count):
+	roles = map(str, range(player_count))
+	players = {r:1 for r in roles}
+	strategies = {r:map(str, range(strategy_count)) for r in roles}
+	return Game(roles, players, strategies)
+
 def independent(N, S, dstr=partial(U,-1,1)):
 	"""
 	All payoff values drawn independently according to specified distribution.
@@ -21,10 +27,7 @@ def independent(N, S, dstr=partial(U,-1,1)):
 	S: number of strategies
 	dstr: distribution from which payoff values are independently drawn
 	"""
-	roles = map(str, range(N))
-	players = {r:1 for r in roles}
-	strategies = {r:map(str, range(S)) for r in roles}
-	g = Game(roles, players, strategies)
+	g = __make_asymmetric_game(N, S)
 	for prof in g.allProfiles():
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, dstr())] \
 				for r in prof})
@@ -49,10 +52,7 @@ def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 	Both mean_func and covar_func should be numpy-style random number generators
 	that can return an array.
 	"""
-	roles = map(str, range(N))
-	players = {r:1 for r in roles}
-	strategies = {r:map(str, range(S)) for r in roles}
-	g = Game(roles, players, strategies)
+	g = __make_asymmetric_game(N, S)
 	mean = zeros(S)
 	covar = zeros([S,S])
 	for prof in g.allProfiles():
@@ -61,7 +61,7 @@ def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 		covar.fill(covar_func())
 		fill_diagonal(covar, var)
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[i])] \
-				for i,r in enumerate(roles)})
+				for i,r in enumerate(g.roles)})
 	return g
 	
 
