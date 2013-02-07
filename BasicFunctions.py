@@ -6,7 +6,6 @@ from subprocess import PIPE, Popen
 from functools import partial
 import sys
 import numpy as np
-from scipy.misc import comb
 
 
 def prod(collection):
