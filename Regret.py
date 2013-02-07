@@ -4,7 +4,6 @@ from itertools import product, chain, combinations_with_replacement as CwR
 
 import numpy as np
 
-#from RoleSymmetricGame import *
 from BasicFunctions import one_line
 from RoleSymmetricGame import is_mixed_profile, is_pure_profile, is_mixture_array, is_profile_array, Profile
 
