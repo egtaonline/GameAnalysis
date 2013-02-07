@@ -8,7 +8,7 @@ from random import choice
 from HashableClasses import h_dict
 from BasicFunctions import flatten, game_size, one_line, prod, profile_repetitions
 
-PayoffData = namedtuple("payoff", "strategy count value")
+PayoffData = namedtuple("PayoffData", "strategy count value")
 
 tiny = float(np.finfo(np.float64).tiny)
 
