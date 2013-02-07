@@ -5,11 +5,14 @@ from string import join
 
 import requests
 
-from GameIO import read, read_v3_profile, read_v3_samples_profile
+from GameIO import read, read_v3_profile, read_v3_samples_profile, read_v3_players_profile
 from RoleSymmetricGame import Profile
 from Reductions import DPR_profiles
 from BasicFunctions import one_line
 
+
+modifiable_attributes = ["process_memory", "name", "parameter_hash", "active", \
+						"time_per_sample", "nodes", "samples_per_simulation"]
 
 class TestbedObject:
 	def __init__(self, name, obj_type, name_field="", options={}, \
@@ -170,10 +173,6 @@ class DPR_scheduler:
 		self.samples += additional_samples
 		for profile in DPR_profiles(self.TB_game.game, self.players):
 			self.TB_scheduler.addProfile(profile, self.samples)
-
-
-modifiable_attributes = ["process_memory", "name", "parameter_hash", "active", \
-						"time_per_sample", "nodes", "samples_per_simulation"]
 
 
 from argparse import ArgumentParser

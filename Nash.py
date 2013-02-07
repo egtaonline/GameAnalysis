@@ -104,7 +104,7 @@ def main():
 		equilibria = [pure_nash(g, args.r) for g in games]
 		if args.one:
 			for i in range(len(games)):
-				if len(equilibira[i]) == 0:
+				if len(equilibria[i]) == 0:
 					equilibria[i] = min_regret_profile(games[i])
 	elif args.type == "mixed":
 		equilibria = [[g.toProfile(eq, args.s) for eq in mixed_nash(g, \

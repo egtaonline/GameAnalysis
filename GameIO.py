@@ -82,9 +82,9 @@ def read_JSON(data):
 			return read_v3_profile(data)
 		if "observations" in data:
 			if "players" in data["observations"]["symmetry_groups"]:
-				return read_v3_player_profile(data)
+				return read_v3_players_profile(data)
 			else:
-				return read_v3_sample_profile(data)
+				return read_v3_samples_profile(data)
 		if "sample_count" in data:
 			return read_v2_profile(data)
 		if "type" in data and data["type"] == "GA_Profile":
@@ -111,7 +111,7 @@ def read_game_JSON(gameJSON):
 	elif "strategies" in gameJSON["roles"][0]:
 		return read_game_JSON_v2(gameJSON)
 	else:
-		raise IOError(one_line("invalid game JSON: " + str(data), 71))
+		raise IOError(one_line("invalid game JSON: " + str(gameJSON), 71))
 
 
 def read_GA_game(gameJSON):
