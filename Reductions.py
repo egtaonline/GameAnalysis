@@ -43,7 +43,7 @@ def deviation_preserving_reduction(game, players={}):
 		for full_prof in game.knownProfiles():
 			try:
 				rp, role, strat = dpr_profile(full_prof, players, game.players)
-			except NotImplementedError as NIE:
+			except NotImplementedError:
 				divisible = False
 				break
 			if rp not in reduced_profile_data:

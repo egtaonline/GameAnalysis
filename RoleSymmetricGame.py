@@ -1,13 +1,12 @@
 import numpy as np
 
-from itertools import product, chain, combinations_with_replacement as CwR
+from itertools import product, combinations_with_replacement as CwR
 from collections import namedtuple
-from math import isinf
 from string import join
 from random import choice
 
-from HashableClasses import *
-from BasicFunctions import *
+from HashableClasses import h_dict
+from BasicFunctions import flatten, game_size, one_line, prod, profile_repetitions
 
 PayoffData = namedtuple("payoff", "strategy count value")
 
@@ -417,7 +416,7 @@ class SampleGame(Game):
 		samples = map(list, self.zeros())
 		for r, role in enumerate(self.roles):
 			played = []
-			for strat, count, values in role_payoffs[role]:
+			for strat, __, values in role_payoffs[role]:
 				s = self.index(role, strat)
 				samples[r][s] = values
 				self.min_samples = min(self.min_samples, len(values))

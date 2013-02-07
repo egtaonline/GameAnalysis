@@ -3,18 +3,13 @@
 import RandomGames as RG
 
 from GameIO import read, to_JSON_str
-from Subgames import subgame
 from Regret import regret
 from Nash import mixed_nash, replicator_dynamics, pure_nash
-from Reductions import deviation_preserving_reduction as DPR
 
 from sys import stdin
-from os import listdir
-from os.path import join, exists, dirname
 from argparse import ArgumentParser
 from random import sample
 from copy import copy
-from json import dumps
 from functools import partial
 
 import numpy as np
@@ -74,7 +69,7 @@ def bootstrap(game, equilibrium, statistic=regret, method="resample", \
 	"""
 	boot_dstr = []
 	method = getattr(game, method)
-	for i in range(points):
+	for __ in range(points):
 		method(*method_args)
 		boot_dstr.append(statistic(game, equilibrium))
 	game.reset()

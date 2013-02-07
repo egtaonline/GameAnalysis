@@ -126,7 +126,7 @@ def congestion(N, facilities, required):
 	players = {"All":N}
 	strategies = {'+'.join(["f"+str(f) for f in strat]):strat for strat in \
 			combinations(range(facilities), required)}
-	facility_values = [array([U(facilities), U(-required), U(-1)]) for i in \
+	facility_values = [array([U(facilities), U(-required), U(-1)]) for __ in \
 			range(facilities)]
 	g = Game(roles, players, {"All":strategies.keys()})
 	for prof in g.allProfiles():
@@ -308,7 +308,7 @@ def main():
 									"strategy counts"
 		game_args = map(int, args.game_args)
 	
-	games = [game_func(*game_args) for i in range(args.count)]
+	games = [game_func(*game_args) for __ in range(args.count)]
 
 	if args.noise == "normal":
 		assert len(args.noise_args) == 2, "noise_args must specify stdev "+\
