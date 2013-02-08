@@ -60,8 +60,8 @@ def pre_aggregate(game, count):
 	return agg
 
 
-def bootstrap(game, equilibrium, statistic=regret, method_args=[], \
-					method="resample", points=1000):
+def bootstrap(game, equilibrium, statistic=regret, method="resample", \
+				method_args=[], points=1000):
 	"""
 	Returns a bootstrap distribution for the statistic.
 
@@ -174,8 +174,8 @@ def parse_args():
 		args.noise_func = lambda g,s,c: pre_aggregate(args.noise_func(g,s,c), \
 											args.agg)
 	assert not (args.rd and args.pure), "Must use mixed_nash for rd bootstrap"
-	args.bootstrap_args = [[args.pair] if not args.single else [], "resample" \
-						if not args.single else "singleSample", args.points]
+	args.bootstrap_args = ["resample" if not args.single else "singleSample", \
+						[args.pair] if not args.single else [], args.points]
 	return args
 
 

@@ -445,13 +445,13 @@ class SampleGame(Game):
 		pair = profile: resample paired profile observations
 		pair = game: resample paired game observations
 		"""
-		if pair == 0:
+		if pair == "payoff":
 			raise NotImplementedError("TODO")
-		elif pair == 1:#TODO: handle ragged arrays
+		elif pair == "profile":#TODO: handle ragged arrays
 			self.values = map(lambda p: np.average(p, 2, weights= \
 					np.random.multinomial(p.shape[2], np.ones( \
 					p.shape[2])/p.shape[2])), self.sample_values)
-		elif pair == 2:#TODO: handle ragged arrays
+		elif pair == "game":#TODO: handle ragged arrays
 			if isinstance(self.sample_values, list):
 				self.sample_values = np.array(self.sample_values, dtype=float)
 			s = self.sample_values.shape[3]
