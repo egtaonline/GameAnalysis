@@ -241,11 +241,20 @@ def normal_noise(game, stdev, samples):
 	"""
 	sg = SampleGame(game.roles, game.players, game.strategies)
 	for prof in game.knownProfiles():
-		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
-				normal(0, stdev, samples)) for s in prof[r]] for r \
-				in game.roles})
+		sg.addProfile(generate_normal_noise(game, prof, stdev, samples))
 	return sg
 
+def generate_normal_noise(game, profile, stdev, samples):
+	"""
+	returns payoff_data with normal noise added to the payoffs for profile in game
+	
+	game: a RSG.game or RSG.SampleGame
+	profile: profile to add noise for
+	std_dev: the standard deviation for the noise function
+	samples: number of samples to take for this profile
+	"""
+	return {r: [PayoffData(s, profile[r][s], game.getPayoff(profile, r, s) +
+					normal(0, stdev, samples)) for s in profile[r] for r in game.roles]}
 
 def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
 	"""
