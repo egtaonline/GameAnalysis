@@ -1,38 +1,56 @@
-from RoleSymmetricGame import SampleGame, PayoffData
-from RandomGames import generate_normal_noise
-from Nash import mixed_nash
+from RoleSymmetricGame import Profile, PayoffData, Game
+from BasicFunctions import flatten
+from Nash import replicator_dynamics
 from numpy.linalg import norm
+from RandomGames import generate_normal_noise
+from Regret import regret
 
-class SequentialSamplingGame(SampleGame):
-    def __init__(self, roles=[], players={}, strategies={}, default_payoff_values=[]):
-        SampleGame.__init__(roles, players, strategies)
+class ObservationMatrix:
+    def __init__(self, payoff_data=[]):
+        self.profile_dict = {}
+        for profile_data_set in payoff_data:
+            self.addObservations(Profile({role: {payoff.strategy: payoff.count for payoff in payoffs}
+                                         for role, payoffs in profile_data_set.items()}), profile_data_set)
 
-def sequential_normal_noise(game, stdev, evaluator, sample_increment):
-    """
-    Creates a game with normal noise sequentially
+    def addObservations(self, profile, role_payoffs):
+        profile_entry = self.profile_dict.get(profile, {role: {strategy: [] for strategy in strategies}
+                                        for role, strategies in profile.items()})
+        for role, strategies in profile_entry.items():
+            for payoff in role_payoffs[role]:
+                strategies[payoff.strategy].extend(payoff.value)
+        self.profile_dict[profile] = profile_entry
     
-    game - provides the necessary structure, i.e. the roles, strategies, and base payoffs
+    def getPayoffData(self, profile, role, strategy):
+        return self.profile_dict[profile][role][strategy]
+    
+    def toGame(self):
+        sample_profile = self.profile_dict.keys()[0]
+        g_roles = sample_profile.keys()
+        g_players = {role: sum(strategies.values()) for role, strategies in sample_profile.items()}
+        g_strategies = {role: set(flatten([profile[role] for profile in self.profile_dict.keys()]))
+                      for role in g_roles}
+        g_payoff_data = [{role: [PayoffData(strategy, profile[role][strategy], observations)
+                        for strategy, observations in strategies.items()]
+                        for role, strategies in role_strategies.items()} 
+                        for profile, role_strategies in self.profile_dict.items()]
+        return Game(g_roles, g_players, g_strategies, g_payoff_data)
+
+def sequential_normal_noise(ss_game, stdev, evaluator, sample_increment):
+    """
+    Creates an observation matrix sequentially with normal noise
+    
+    ss_game - a game to give the basic structure and base payoffs
     stdev - the standard deviation for use with normal noise generation
     evaluator - an object that can evaluate whether or not to continue sampling by inspecting game
     sample_increment - the number of samples to take in each step    
     """
-    g = SequentialSamplingGame(game.roles, game.players, game.strategies)
-    while evaluator.continue_sampling(g):
-        new_g = SampleGame(game.roles, game.players, game.strategies)
-        for profile in game.knownProfiles():
-            new_data = generate_normal_noise(game, profile, stdev, sample_increment)
-            payoff_data = {}
-            for r in game.roles:
-                role_array = []
-                for entry in new_data[r]:
-                    s = entry.strategy
-                    
-                    role_array.append(PayoffData(s, profile[r][s], 
-                                g.getPayoffData(profile, r, s) + entry.value))
-                payoff_data[r] = role_array
-            new_g.addProfile(payoff_data)
-        g = new_g
-    return g
+    matrix = ObservationMatrix()
+    while evaluator.continue_sampling(ss_game):
+        for profile in ss_game.knownProfiles():
+            new_data = generate_normal_noise(ss_game, profile, stdev, sample_increment)
+            matrix.addObservations(profile, new_data)
+            ss_game = matrix.toGame()
+    return matrix
 
 class EquilibriumCompareEvaluator:
     def __init__(self, compare_threshold, regret_threshold=1e-4, dist_threshold=None, 
@@ -43,16 +61,31 @@ class EquilibriumCompareEvaluator:
         self.random_restarts = random_restarts
         self.iters = iters
         self.converge_threshold = converge_threshold
-        self.old_equilibrium = None
+        self.old_equilibria = []
         
     def continue_sampling(self, game):
-        if game.max_samples is 0:
-            return True
+        decision = False
+        equilibria = []
+        all_eq = []
+        for eq in self.old_equilibria:
+            new_eq = replicator_dynamics(game, eq, self.iters, self.converge_threshold)
+            decision = decision or norm(new_eq - eq) > self.compare_threshold
+            distances = map(lambda e: norm(e-eq, 2), equilibria)
+            if regret(game, new_eq) <= self.regret_threshold and \
+                    all([d >= self.dist_threshold for d in distances]):
+                equilibria.append(new_eq)
+            all_eq.append(new_eq)
+        for m in game.biasedMixtures() + [game.uniformMixture()] + \
+                [game.randomMixture() for __ in range(self.random_restarts)]:
+            eq = replicator_dynamics(game, m, self.iters, self.converge_threshold)
+            distances = map(lambda e: norm(e-eq,2), equilibria)
+            if regret(game, eq) <= self.regret_threshold and \
+                    all([d >= self.dist_threshold for d in distances]):
+                equilibria.append(eq)
+                decision = True
+        all_eq.append(eq)
+        if len(equilibria) == 0:
+            self.old_equilibria = [min(all_eq, key=lambda e: regret(game, e))]
         else:
-            new_equilibrium = mixed_nash(game, self.regret_threshold, self.dist_threshold,
-                    self.random_restarts, True, self.iters, self.converge_threshold)
-            decision = self.old_equilibrium is None or \
-                    norm(self.old_equilibrium-new_equilibrium) > self.compare_threshold
-            self.old_equilibrium = new_equilibrium
-            return decision
-        
+            self.old_equilibria = equilibria
+        return decision
