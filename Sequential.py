@@ -2,7 +2,7 @@ from RoleSymmetricGame import Profile, PayoffData, Game
 from BasicFunctions import flatten
 from Nash import replicator_dynamics
 from numpy.linalg import norm
-from RandomGames import generate_normal_noise
+from RandomGames import generate_normal_noise, independent
 from Regret import regret
 
 class ObservationMatrix:
@@ -27,8 +27,7 @@ class ObservationMatrix:
         sample_profile = self.profile_dict.keys()[0]
         g_roles = sample_profile.keys()
         g_players = {role: sum(strategies.values()) for role, strategies in sample_profile.items()}
-        g_strategies = {role: set(flatten([profile[role] for profile in self.profile_dict.keys()]))
-                      for role in g_roles}
+        g_strategies = {role: flatten([profile[role].keys() for profile in self.profile_dict.keys()]) for role in g_roles}
         g_payoff_data = [{role: [PayoffData(strategy, profile[role][strategy], observations)
                         for strategy, observations in strategies.items()]
                         for role, strategies in role_strategies.items()} 
@@ -49,7 +48,7 @@ def sequential_normal_noise(ss_game, stdev, evaluator, sample_increment):
         for profile in ss_game.knownProfiles():
             new_data = generate_normal_noise(ss_game, profile, stdev, sample_increment)
             matrix.addObservations(profile, new_data)
-            ss_game = matrix.toGame()
+        ss_game = matrix.toGame()
     return matrix
 
 class EquilibriumCompareEvaluator:
@@ -67,10 +66,10 @@ class EquilibriumCompareEvaluator:
         decision = False
         equilibria = []
         all_eq = []
-        for eq in self.old_equilibria:
-            new_eq = replicator_dynamics(game, eq, self.iters, self.converge_threshold)
-            decision = decision or norm(new_eq - eq) > self.compare_threshold
-            distances = map(lambda e: norm(e-eq, 2), equilibria)
+        for old_eq in self.old_equilibria:
+            new_eq = replicator_dynamics(game, old_eq, self.iters, self.converge_threshold)
+            decision = decision or norm(new_eq - old_eq) > self.compare_threshold
+            distances = map(lambda e: norm(e-new_eq, 2), equilibria)
             if regret(game, new_eq) <= self.regret_threshold and \
                     all([d >= self.dist_threshold for d in distances]):
                 equilibria.append(new_eq)
@@ -83,9 +82,19 @@ class EquilibriumCompareEvaluator:
                     all([d >= self.dist_threshold for d in distances]):
                 equilibria.append(eq)
                 decision = True
-        all_eq.append(eq)
+            all_eq.append(eq)
         if len(equilibria) == 0:
+            decision = True
             self.old_equilibria = [min(all_eq, key=lambda e: regret(game, e))]
         else:
             self.old_equilibria = equilibria
         return decision
+
+
+def main():
+    game = independent(4, 4)
+    sgame = sequential_normal_noise(game, 2.0, EquilibriumCompareEvaluator(0.001), 5)
+    
+if __name__ == "__main__":
+    main()
+    
