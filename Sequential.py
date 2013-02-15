@@ -45,6 +45,7 @@ def sequential_normal_noise(ss_game, stdev, evaluator, sample_increment):
     """
     matrix = ObservationMatrix()
     while evaluator.continue_sampling(ss_game):
+        print evaluator.old_equilibria
         for profile in ss_game.knownProfiles():
             new_data = generate_normal_noise(ss_game, profile, stdev, sample_increment)
             matrix.addObservations(profile, new_data)
@@ -56,7 +57,7 @@ class EquilibriumCompareEvaluator:
                  random_restarts=0, iters=10000, converge_threshold=1e-8):
         self.compare_threshold = compare_threshold
         self.regret_threshold = regret_threshold
-        self.dist_threshold = dist_threshold or compare_threshold/10.0
+        self.dist_threshold = dist_threshold or compare_threshold/2.0
         self.random_restarts = random_restarts
         self.iters = iters
         self.converge_threshold = converge_threshold
@@ -68,7 +69,7 @@ class EquilibriumCompareEvaluator:
         all_eq = []
         for old_eq in self.old_equilibria:
             new_eq = replicator_dynamics(game, old_eq, self.iters, self.converge_threshold)
-            decision = decision or norm(new_eq - old_eq) > self.compare_threshold
+            decision = decision or norm(new_eq-old_eq, 2) > self.compare_threshold
             distances = map(lambda e: norm(e-new_eq, 2), equilibria)
             if regret(game, new_eq) <= self.regret_threshold and \
                     all([d >= self.dist_threshold for d in distances]):
