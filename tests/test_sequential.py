@@ -83,4 +83,5 @@ class describe_standard_error_evaluator:
         matrix.addObservations(target_profile, {'All': [PayoffData('A', 2, [10, 20, 45])]})
         evaluator = StandardErrorEvaluator(1, [target_profile])
         assert evaluator.continue_sampling(matrix) == True
+
         
