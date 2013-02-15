@@ -1,15 +1,14 @@
 import numpy as np
 
-from itertools import product, chain, combinations_with_replacement as CwR
+from itertools import product, combinations_with_replacement as CwR
 from collections import namedtuple
-from math import isinf
 from string import join
 from random import choice
 
-from HashableClasses import *
-from BasicFunctions import *
+from HashableClasses import h_dict
+from BasicFunctions import flatten, game_size, one_line, prod, profile_repetitions
 
-PayoffData = namedtuple("payoff", "strategy count value")
+PayoffData = namedtuple("PayoffData", "strategy count value")
 
 tiny = float(np.finfo(np.float64).tiny)
 

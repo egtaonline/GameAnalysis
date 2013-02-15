@@ -13,6 +13,12 @@ from numpy import array, arange, zeros, fill_diagonal
 import sys
 
 
+def __make_asymmetric_game(player_count, strategy_count):
+	roles = map(str, range(player_count))
+	players = {r:1 for r in roles}
+	strategies = {r:map(str, range(strategy_count)) for r in roles}
+	return Game(roles, players, strategies)
+
 def independent(N, S, dstr=partial(U,-1,1)):
 	"""
 	All payoff values drawn independently according to specified distribution.
@@ -21,10 +27,7 @@ def independent(N, S, dstr=partial(U,-1,1)):
 	S: number of strategies
 	dstr: distribution from which payoff values are independently drawn
 	"""
-	roles = map(str, range(N))
-	players = {r:1 for r in roles}
-	strategies = {r:map(str, range(S)) for r in roles}
-	g = Game(roles, players, strategies)
+	g = __make_asymmetric_game(N, S)
 	for prof in g.allProfiles():
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, dstr())] \
 				for r in prof})
@@ -49,10 +52,7 @@ def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 	Both mean_func and covar_func should be numpy-style random number generators
 	that can return an array.
 	"""
-	roles = map(str, range(N))
-	players = {r:1 for r in roles}
-	strategies = {r:map(str, range(S)) for r in roles}
-	g = Game(roles, players, strategies)
+	g = __make_asymmetric_game(N, S)
 	mean = zeros(S)
 	covar = zeros([S,S])
 	for prof in g.allProfiles():
@@ -61,7 +61,7 @@ def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 		covar.fill(covar_func())
 		fill_diagonal(covar, var)
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[i])] \
-				for i,r in enumerate(roles)})
+				for i,r in enumerate(g.roles)})
 	return g
 	
 
@@ -126,7 +126,7 @@ def congestion(N, facilities, required):
 	players = {"All":N}
 	strategies = {'+'.join(["f"+str(f) for f in strat]):strat for strat in \
 			combinations(range(facilities), required)}
-	facility_values = [array([U(facilities), U(-required), U(-1)]) for i in \
+	facility_values = [array([U(facilities), U(-required), U(-1)]) for __ in \
 			range(facilities)]
 	g = Game(roles, players, {"All":strategies.keys()})
 	for prof in g.allProfiles():
@@ -241,12 +241,24 @@ def normal_noise(game, stdev, samples):
 	"""
 	sg = SampleGame(game.roles, game.players, game.strategies)
 	for prof in game.knownProfiles():
-		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
-				normal(0, stdev, samples)) for s in prof[r]] for r \
-				in game.roles})
+		sg.addProfile(generate_normal_noise(game, prof, stdev, samples))
 	return sg
 
-
+def generate_normal_noise(game, profile, stdev, samples):
+	"""
+	returns payoff_data with normal noise added to the payoffs for profile in game
+	
+	game: a RSG.game or RSG.SampleGame
+	profile: profile to add noise for
+	std_dev: the standard deviation for the noise function
+	samples: number of samples to take for this profile
+	"""
+	payoff_data = {}
+	for r in sorted(game.roles):
+		payoff_data[r] = [PayoffData(s, profile[r][s], game.getPayoff(profile, r, s) +
+									normal(0, stdev, samples)) for s in profile[r].keys()]
+	return payoff_data
+	
 def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
 	"""
 	Generate SampleGame with Gaussian mixture noise added to each payoff.
@@ -325,7 +337,7 @@ def main():
 									"strategy counts"
 		game_args = map(int, args.game_args)
 	
-	games = [game_func(*game_args) for i in range(args.count)]
+	games = [game_func(*game_args) for __ in range(args.count)]
 
 	if args.noise == "normal":
 		assert len(args.noise_args) == 2, "noise_args must specify stdev "+\
