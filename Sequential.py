@@ -1,9 +1,10 @@
 from RoleSymmetricGame import Profile, PayoffData, Game
 from BasicFunctions import flatten
-from Nash import replicator_dynamics
+import Nash
 from numpy.linalg import norm
 from RandomGames import generate_normal_noise, independent
-from Regret import regret
+import Regret
+from scipy.stats.stats import sem
 
 class ObservationMatrix:
     def __init__(self, payoff_data=[]):
@@ -44,13 +45,25 @@ def sequential_normal_noise(ss_game, stdev, evaluator, sample_increment):
     sample_increment - the number of samples to take in each step    
     """
     matrix = ObservationMatrix()
-    while evaluator.continue_sampling(ss_game):
+    while evaluator.continue_sampling(matrix):
         print evaluator.old_equilibria
         for profile in ss_game.knownProfiles():
             new_data = generate_normal_noise(ss_game, profile, stdev, sample_increment)
             matrix.addObservations(profile, new_data)
-        ss_game = matrix.toGame()
     return matrix
+
+class StandardErrorEvaluator:
+    def __init__(self, standard_err_threshold, target_set):
+        self.standard_err_threshold = standard_err_threshold
+        self.target_set = target_set
+        
+    def continue_sampling(self, matrix):
+        for profile in self.target_set:
+            for role, strategies in profile.items():
+                for strategy in strategies.keys():
+                    if sem(matrix.getPayoffData(profile, role, strategy)) >= self.standard_err_threshold:
+                        return True
+        return False
 
 class EquilibriumCompareEvaluator:
     def __init__(self, compare_threshold, regret_threshold=1e-4, dist_threshold=None, 
@@ -63,30 +76,31 @@ class EquilibriumCompareEvaluator:
         self.converge_threshold = converge_threshold
         self.old_equilibria = []
         
-    def continue_sampling(self, game):
+    def continue_sampling(self, matrix):
+        game = matrix.toGame()
         decision = False
         equilibria = []
         all_eq = []
         for old_eq in self.old_equilibria:
-            new_eq = replicator_dynamics(game, old_eq, self.iters, self.converge_threshold)
+            new_eq = Nash.replicator_dynamics(game, old_eq, self.iters, self.converge_threshold)
             decision = decision or norm(new_eq-old_eq, 2) > self.compare_threshold
             distances = map(lambda e: norm(e-new_eq, 2), equilibria)
-            if regret(game, new_eq) <= self.regret_threshold and \
+            if Regret.regret(game, new_eq) <= self.regret_threshold and \
                     all([d >= self.dist_threshold for d in distances]):
                 equilibria.append(new_eq)
             all_eq.append(new_eq)
         for m in game.biasedMixtures() + [game.uniformMixture()] + \
                 [game.randomMixture() for __ in range(self.random_restarts)]:
-            eq = replicator_dynamics(game, m, self.iters, self.converge_threshold)
+            eq = Nash.replicator_dynamics(game, m, self.iters, self.converge_threshold)
             distances = map(lambda e: norm(e-eq,2), equilibria)
-            if regret(game, eq) <= self.regret_threshold and \
+            if Regret.regret(game, eq) <= self.regret_threshold and \
                     all([d >= self.dist_threshold for d in distances]):
                 equilibria.append(eq)
                 decision = True
             all_eq.append(eq)
         if len(equilibria) == 0:
             decision = True
-            self.old_equilibria = [min(all_eq, key=lambda e: regret(game, e))]
+            self.old_equilibria = [min(all_eq, key=lambda e: Regret.regret(game, e))]
         else:
             self.old_equilibria = equilibria
         return decision
