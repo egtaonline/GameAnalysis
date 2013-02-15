@@ -253,9 +253,12 @@ def generate_normal_noise(game, profile, stdev, samples):
 	std_dev: the standard deviation for the noise function
 	samples: number of samples to take for this profile
 	"""
-	return {r: [PayoffData(s, profile[r][s], game.getPayoff(profile, r, s) +
-					normal(0, stdev, samples)) for s in profile[r] for r in game.roles]}
-
+	payoff_data = {}
+	for r in sorted(game.roles):
+		payoff_data[r] = [PayoffData(s, profile[r][s], game.getPayoff(profile, r, s) +
+									normal(0, stdev, samples)) for s in profile[r].keys()]
+	return payoff_data
+	
 def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
 	"""
 	Generate SampleGame with Gaussian mixture noise added to each payoff.
