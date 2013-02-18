@@ -1,7 +1,5 @@
 #! /usr/bin/env python2.7
 
-from heapq import heappush, heappop
-
 from HashableClasses import h_dict
 from RoleSymmetricGame import SampleGame, PayoffData
 

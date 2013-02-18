@@ -4,7 +4,7 @@ from numpy.linalg import norm
 
 from BasicFunctions import call
 from GameIO import to_NFG_asym, read_NE
-from RoleSymmetricGame import Profile, tiny, is_constant_sum
+from RoleSymmetricGame import tiny, is_constant_sum
 from Regret import regret
 
 def pure_nash(game, epsilon=0):
@@ -29,7 +29,7 @@ def mixed_nash(game, regret_thresh=1e-4, dist_thresh=1e-2, random_restarts=0, \
 	equilibria = []
 	all_eq = []
 	for m in game.biasedMixtures() + [game.uniformMixture()] + \
-			[game.randomMixture() for i in range(random_restarts)]:
+			[game.randomMixture() for __ in range(random_restarts)]:
 		eq = replicator_dynamics(game, m, *RD_args, **RD_kwds)
 		distances = map(lambda e: norm(e-eq,2), equilibria)
 		if regret(game, eq) <= regret_thresh and all([d >= dist_thresh \

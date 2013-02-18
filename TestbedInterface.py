@@ -6,7 +6,6 @@ from string import join
 import requests
 
 from GameIO import read, read_v3_profile, read_v3_samples_profile, read_v3_players_profile
-from RoleSymmetricGame import Profile
 from Reductions import DPR_profiles
 from BasicFunctions import one_line
 
