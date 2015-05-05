@@ -76,7 +76,7 @@ def pre_aggregate(game, count):
 	return agg
 
 
-def bootstrap(game, equilibria, statistic=regret, method="resample", method_args=[], points=1000):
+def bootstrap(game, equilibria, intervals = [95], statistic=regret, method="resample", method_args=[], points=1000):
 	"""
 	Returns a bootstrap distribution for the statistic.
 
@@ -96,10 +96,12 @@ def bootstrap(game, equilibria, statistic=regret, method="resample", method_args
                 boot_lists[count].append(statistic(game, eq))
                 count = count + 1
         game.reset()
-        conf_intervals = []
+        conf_intervals = [{} for x in xrange(0,len(equilibria))]
+        count = 0
         for boot_list in boot_lists:
-            boot_list.sort()
-            conf_intervals.append(boot_list[950])
+            for interval in intervals:
+                conf_intervals[count][interval] = np.percentile(boot_list,interval)
+            count = count + 1 
         return conf_intervals
 
 
@@ -107,17 +109,23 @@ def parse_args():
     parser = io_parser()
     parser.add_argument("profiles", type=str, help="File with profiles from"+\
         " input games for which confidence intervals should be calculated.")
+    parser.add_argument("--interval", dest='intervals', metavar='INTERVALS',type = float, nargs = '+', help = "List of confidence intervals to calculate (default = [95])",default = [95])
+    parser.add_argument("--point", metavar = 'POINTS', type = int, default = 1000, help = "Number of points to sample (default = 1000)")
     return parser.parse_args()
 
 
 def main():
         args = parse_args()
         game = args.input
+        intervals = args.intervals
         profiles = read(args.profiles)
+        point = args.point
         if not isinstance(profiles, list):
             profiles = [profiles]
-        results = bootstrap(game,profiles)
-        print to_JSON_str(results, indent=None)
+        if not isinstance(intervals, list):
+            intervals = [intervals]
+        results = bootstrap(game,profiles,intervals,points = point)
+        print to_JSON_str(results)
 
 
 if __name__ == "__main__":
